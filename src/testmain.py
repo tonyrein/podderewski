@@ -1,20 +1,14 @@
-from dto import *
-from dao import *
+# from dto import *
+# from dao import *
 from service import PodService
+import pd_util
+import dao
 
+pd_util.init_dirs()
 
-# q = FeedDao.select()
-# feedlist = []
-# for fd in q:
-#     f = Feed.create_from_dao(fd)
-#     feedlist.append(f)
-#     
-# f = feedlist[1]
-# for e in f.episodes:
-#     print(e.generate_filename())
-init_database() 
-#endao = FeedDao.select().where(FeedDao.name == 'Engines Of Our Ingenuity').get()
+dao.init_database() 
 
+# list of podcasts to subscribe to:
 sub_urls = [
             ('http://www.npr.org/rss/podcast.php?id=510208','Car Talk'),
             ('http://www.npr.org/rss/podcast.php?id=510030', 'Engines of Our Ingenuity'),

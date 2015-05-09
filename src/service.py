@@ -44,10 +44,6 @@ class PodService(object):
     @classmethod
     def add_feed(cls, feed_url, alt_name = None):
         return Feed.init_from_url(feed_url, alt_name)
-#         f = Feed.create_from_url(feed_url)
-#         if not alt_name is None:
-#             f.name = alt_name
-#             f.save()
 
     
     

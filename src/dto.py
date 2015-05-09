@@ -6,12 +6,11 @@ from peewee import fn
 
 import feedparser
 import datetime
+import wget
 from urlparse import urlparse
 import os.path
 from operator import attrgetter
 
-DEFAULT_NUMBER_TO_KEEP = 30
-DEFAULT_AGE_TO_KEEP = 90
 
 
 # Utility functions:
@@ -40,10 +39,18 @@ def get_entry_url_and_type(entry):
     return (ret_list[0], ret_list[1])
     
 class Feed(object):
+    def __init__(self):
+        # Derive download directory name and set our property.
+        # Property setter creates directory if it isn't already there.
+        dir = self.make_download_dir()
+        self.download_dir = dir
+            
+    
     """
         Gets current list of episodes for this feed.
         Then, adds feeds which are not already on this
-        feed's episodes list.
+        feed's episodes list. Sorts list by date and
+        retains only specified number of episodes.
     """
     def update(self):
         self.load_episodes_from_db()
@@ -60,11 +67,11 @@ class Feed(object):
         # now sort the episodes list by date, with newest first:
         self.episodes.sort(key=attrgetter('episode_date'), reverse = True)
         # trim the list if there are more episodes than this feed's episodes_to_keep value:
-        if len(self.episodes) > self.episodes_to_keep:
-            episodes_to_ditch = self.episodes[self.episodes_to_keep:]
-            for ep_to_ditch in episodes_to_ditch:
-                ep_to_ditch.delete() 
-            
+        episodes_to_ditch = self.episodes[self.episodes_to_keep:] # slice will be empty if list shorter than episodes_to_keep
+        for ep_to_ditch in episodes_to_ditch:
+            ep_to_ditch.delete() 
+        self.episodes = self.episodes[0:episodes_to_keep]
+        self.last_updated = datetime.datetime.utcnow()
         self.save()
 
     """
@@ -75,31 +82,42 @@ class Feed(object):
         pass
     """
         Where to put downloaded episodes?
+        Construct a directory name from the feed name,
+        but replace spaces with '_' and characters
+        that are not valid in a filename with '-'
     """
-    def get_download_dir(self):
+    def make_download_dir(self):
         cfg = PodConfig.get_instance()
         n = self.name.replace(' ','_')
         d = pd_util.remove_invalid_filename_chars(n)
         return cfg['main']['top_dir'] + os.sep + cfg['main']['download_dir'] + os.sep + d
-        
-    """
-        downloads only episodes which have not already been
-        downloaded. If an episode has been downloaded previously,
-        it will not be downloaded again, even if the file is
-        no longer in the download directory. If you want all
-        the files, even those that have already been downloaded,
-        use 'download_all()'
-    """
-    def download_new(self):
-        pass
     
+    """
+        download episodes.
+        If overwrite is True, download even if episode file already exists. Default is False.
+        If new_only is True, do not download episodes that have already been downloaded,
+        even if the episode file is no longer there. Default is True.
+    """
+    def download(self, overwrite = False, new_only = True):
+        for ep in self.episodes:
+            ep.download(overwrite,new_only)
+    
+    
+    """
+        Find episodes in the database which belong to this feed,
+        and make Episode instances from them.
+    """        
     def load_episodes_from_db(self):
         self.episodes = []
         for ed in self.dao.episodes:
             e = Episode.create_from_dao(ed)
             e.feed = self
             self.episodes.append(e)
-            
+    
+    """
+        Given a FeedDao instance,
+        make a Feed.
+    """
     @classmethod    
     def create_from_dao(cls,dao):
         f = Feed()
@@ -129,7 +147,7 @@ class Feed(object):
         supplied by feedparser.parse(url).
         
         Whichever name is used, see if there's already a Feed by
-        that name; if so, return that Feed, and othewise, build
+        that name; if so, return that Feed, and otherwise, build
         a new one.
     """
     @classmethod
@@ -173,61 +191,55 @@ class Feed(object):
             f.save()
         return f
     
-    """
-        If caller DID NOT supply alternate name
-            parse the url and get that name.
-        See if there's already a feed with that name.
-        If so, subscribe to it and return that.
-        Otherwise:
-            create new feed
-            fill in fields
-            fill in episodes
-            return new feed
-    """
-    @classmethod
-    def create_from_url(cls,url):
-        cfg = PodConfig.get_instance()
-        f = Feed()
-        f.dao = FeedDao()
-        f.url = url
-        f.number_to_keep = int(cfg['main']['episodes_to_keep'])
-        f.is_subscribed = True
-        f.last_updated = datetime.datetime.utcnow()
-        f.episodes = []
-        f.__parse_url()
-        return f   
-    def subscribe(self):
-        self.is_subscribed = True
-        self.save()
-    def unsubscribe(self):
-        self.is_subscribed = False
-        self.save()
+
+#         If caller DID NOT supply alternate name
+#             parse the url and get that name.
+#         See if there's already a feed with that name.
+#         If so, subscribe to it and return that.
+#         Otherwise:
+#             create new feed
+#             fill in fields
+#             fill in episodes
+#             return new feed
+#     """
+#     @classmethod
+#     def create_from_url(cls,url):
+#         cfg = PodConfig.get_instance()
+#         f = Feed()
+#         f.dao = FeedDao()
+#         f.url = url
+#         f.number_to_keep = int(cfg['main']['episodes_to_keep'])
+#         f.is_subscribed = True
+#         f.last_updated = datetime.datetime.utcnow()
+#         f.episodes = []
+#         f.__parse_url()
+#         return f   
     def save(self):
         self.dao.save()
 
-    """
-        parse the url. Set the title, date of update and description.
-        Save self.
-        Then, if there are entries:
-            For each entry:
-                make an Episode
-                set the Episode's fields
-                save the Episode
-    """
-    def __parse_url(self):
-        f = feedparser.parse(self.dao.url)
-        if f is not None:
-            self.name = f.feed.get('title', 'No title found')
-            self.description = f.feed.get('description', 'No description found')
-            self.save()
-            
-            if f.entries:
-                for e in f.entries:
-                    ep = Episode.create_from_parsed_entry(e)
-                    ep.feed = self
-                    ep.dao.feed = self.dao
-                    ep.save()
-                    self.episodes.append(ep)
+#     """
+#         parse the url. Set the title, date of update and description.
+#         Save self.
+#         Then, if there are entries:
+#             For each entry:
+#                 make an Episode
+#                 set the Episode's fields
+#                 save the Episode
+#     """
+#     def __parse_url(self):
+#         f = feedparser.parse(self.dao.url)
+#         if f is not None:
+#             self.name = f.feed.get('title', 'No title found')
+#             self.description = f.feed.get('description', 'No description found')
+#             self.save()
+#             
+#             if f.entries:
+#                 for e in f.entries:
+#                     ep = Episode.create_from_parsed_entry(e)
+#                     ep.feed = self
+#                     ep.dao.feed = self.dao
+#                     ep.save()
+#                     self.episodes.append(ep)
     
     # Properties -- name, url, description, numbr_to_keep, age_to_keep,
     # is_subscribed, last_updated
@@ -279,6 +291,17 @@ class Feed(object):
         if newvalue is None:
             raise Exception('Feed last_updated cannot be null.')
         self.dao.last_updated = newvalue
+    @property
+    def download_dir(self):
+        return self._download_dir
+    @download_dir.setter
+    def download_dir(self,newvalue):
+        if newvalue is None:
+            raise Exception('Feed download_dir cannot be null.')
+        self._download_dir = newvalue
+        if not os.path.isdir(newvalue):
+            os.makedirs(newvalue)
+
 
 
 class Episode(object):
@@ -301,7 +324,7 @@ class Episode(object):
         self.episode_id = entry.get('id','')
         self.episode_date = create_date_from_structs(
             entry.get('published_parsed',None), entry.get('updated_parsed',None))
-        self.downloaded = False
+        self.downloaded = datetime.date(1970,1,1)
         (self.url, self.mime_type) = get_entry_url_and_type(entry)
     @classmethod
     def create_from_dao(cls,dao):
@@ -318,7 +341,7 @@ class Episode(object):
     """
         Use this episode's fields to generate a name of the form
         Description_YYYY-MM-DD.ext, with spaces in description replaced
-        by underscores.
+        by underscores and invalid characters replaced by '-'.
     """    
     def generate_filename(self):
         p = urlparse(self.dao.url).path
@@ -326,7 +349,24 @@ class Episode(object):
         d = self.title.replace(' ','_')
         dtstr = str(self.episode_date.strftime('%Y-%b-%d'))
         return pd_util.remove_invalid_filename_chars(d + '_' + dtstr + ext)
-     
+    
+    """
+        Download this episode.
+        If overwrite is True, download even if episode file already exists. Default is False.
+        If new_only is True, do not download episodes that have already been downloaded,
+        even if the episode file is no longer there. Default is True.
+    """
+    def download(self, overwrite = False, new_only = True):
+        filespec = self.feed.downlad_dir + os.sep + self.generate_filename
+        if overwrite == False and os.path.isfile(filespec):
+            return ''
+        if new_only and self.downloaded != datetime.date(1970,1,1):
+            return ''
+        dl_res = wget.download(self.url, out=filespec)
+        self.downloaded = datetime.datetime.utcnow()
+        self.save()
+        return dl_res
+    
      # Properties
     @property
     def feed(self):
@@ -342,7 +382,7 @@ class Episode(object):
     @episode_id.setter
     def episode_id(self, newvalue):
         if newvalue is None:
-            raise Exception("Episode episode_id cannot be null.")
+            raise Exception("Episode id cannot be null.")
         self.dao.episode_id = newvalue
     @property
     def url(self):
@@ -392,14 +432,6 @@ class Episode(object):
         if newvalue is None:
             raise Exception("Episode episode_date cannot be null.")
         self.dao.episode_date = newvalue
-    @property
-    def episode_id(self):
-        return self.dao.episode_id
-    @episode_id.setter
-    def episode_id(self, newvalue):
-        if newvalue is None:
-            raise Exception("Episode episode_id cannot be null.")
-        self.dao.episode_id = newvalue
     
     
     
