@@ -202,57 +202,14 @@ class Feed(object):
         return f
     
 
-#         If caller DID NOT supply alternate name
-#             parse the url and get that name.
-#         See if there's already a feed with that name.
-#         If so, subscribe to it and return that.
-#         Otherwise:
-#             create new feed
-#             fill in fields
-#             fill in episodes
-#             return new feed
-#     """
-#     @classmethod
-#     def create_from_url(cls,url):
-#         cfg = PodConfig.get_instance()
-#         f = Feed()
-#         f.dao = FeedDao()
-#         f.url = url
-#         f.number_to_keep = int(cfg['main']['episodes_to_keep'])
-#         f.is_subscribed = True
-#         f.last_updated = datetime.datetime.utcnow()
-#         f.episodes = []
-#         f.__parse_url()
-#         return f   
+  
     def save(self):
         self.dao.save()
 
-#     """
-#         parse the url. Set the title, date of update and description.
-#         Save self.
-#         Then, if there are entries:
-#             For each entry:
-#                 make an Episode
-#                 set the Episode's fields
-#                 save the Episode
-#     """
-#     def __parse_url(self):
-#         f = feedparser.parse(self.dao.url)
-#         if f is not None:
-#             self.name = f.feed.get('title', 'No title found')
-#             self.description = f.feed.get('description', 'No description found')
-#             self.save()
-#             
-#             if f.entries:
-#                 for e in f.entries:
-#                     ep = Episode.create_from_parsed_entry(e)
-#                     ep.feed = self
-#                     ep.dao.feed = self.dao
-#                     ep.save()
-#                     self.episodes.append(ep)
+
     
     # Properties -- name, url, description, numbr_to_keep, age_to_keep,
-    # is_subscribed, last_updated
+    # is_subscribed, last_updated, download_dir
     @property
     def name(self):
         return self.dao.name
