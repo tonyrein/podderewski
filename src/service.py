@@ -25,13 +25,18 @@ class PodService(object):
         one by that name.
     """
     @classmethod
-    def add_feed(cls, feed_url, alt_name = None):
-        return Feed.init_from_url(feed_url, alt_name)
+    def add_feed(cls, feed_url, alt_name = None, episodes_to_keep = None):
+        f = Feed.init_from_url(feed_url, alt_name)
+        if episodes_to_keep:
+            f.number_to_keep = episodes_to_keep
+            f.save()
+        return f
 
     @classmethod
     def update_all_feeds(cls):
         for feed in cls.get_feeds():
-            feed.update()
+            if feed.is_subscribed:
+                feed.update()
     
     """
         Download episodes.
@@ -54,6 +59,44 @@ class PodService(object):
         for feed in feeds_to_get:
             if feed.is_subscribed:
                 feed.download(overwrite,new_only)
-                
+ 
+    """
+        If we were passed a list of feed names, build
+        a list of Feed objects from those names. Otherwise,
+        just use list of all feeds.
+    """
+    @classmethod
+    def _set_subscribe(cls, state = None, feed_list = None):
+        feeds_to_set = []
+        if feed_list is None: # do all
+            feeds_to_set = cls.get_feeds()
+        else: # list of names supplied
+            for s in feed_list:
+                f = cls.get_feed_by_name(s)
+                if f:
+                    feeds_to_set.append(f)
+        for feed in feeds_to_set:
+            if feed.is_subscribed != state:
+                feed.is_subscribed = state
+                feed.save()
+    
+    """
+        For all feeds, or feeds in optional list
+        of names, set their is_subscribed state to True.
+    """            
+    @classmethod
+    def subscribe(cls, feed_list = None):
+        cls._set_subscribe(True, feed_list)
+    
+    """
+        For all feeds, or feeds in optional list
+        of names, set their is_subscribed state to False.
+    """
+    @classmethod
+    def subscribe(cls, feed_list = None):
+        cls._set_subscribe(False, feed_list)
+        
+            
+            
                 
     
