@@ -362,9 +362,9 @@ class Episode(object):
     def generate_filename(self):
         p = urlparse(self.dao.url).path
         ext = os.path.splitext(p)[1]
-        d = self.title.replace(' ','_')
         dtstr = str(self.episode_date.strftime('%Y-%b-%d'))
-        return pd_util.remove_invalid_filename_chars(d + '_' + dtstr + ext)
+        d = self.title.replace(' ','_')
+        return pd_util.remove_invalid_filename_chars(dtstr + '_' + d + ext)
     
     """
         Download this episode.
