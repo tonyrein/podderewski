@@ -3,6 +3,7 @@
 from service import PodService
 import pd_util
 import dao
+import os
 
 pd_util.init_dirs()
 
@@ -30,12 +31,13 @@ for u in sub_urls:
     PodService.add_feed(u[0], u[1])
 
 
+PodService.update_all_feeds()
 
 #Engines = Feed.create_from_dao(endao)
 Engines = PodService.get_feed_by_name('Engines Of Our Ingenuity')
 if Engines is not None:
     for ep in Engines.episodes:
-        print(ep.feed.get_download_dir() + os.sep + ep.generate_filename())
+        print(ep.feed.download_dir + os.sep + ep.generate_filename())
 
 feedlist = PodService.get_feeds()
 for f in feedlist:

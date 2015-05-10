@@ -10,12 +10,7 @@ class PodService(object):
     """
     @classmethod
     def get_feeds(cls):
-        retlist = []
-        q = FeedDao.select()
-        for fd in q:
-            f = Feed.create_from_dao(fd)
-            retlist.append(f)
-        return retlist
+        return Feed.get_feeds()
     
     """
         convenience wrapper
@@ -45,5 +40,9 @@ class PodService(object):
     def add_feed(cls, feed_url, alt_name = None):
         return Feed.init_from_url(feed_url, alt_name)
 
+    @classmethod
+    def update_all_feeds(cls):
+        for feed in cls.get_feeds():
+            feed.update()
     
     

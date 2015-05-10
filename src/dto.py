@@ -18,11 +18,11 @@ def create_date_from_structs(published, updated):
     # published and updated are tm_struct structures
     # if updated, use that; otherwise use published
     if updated is not None:
-        return datetime.date(updated.tm_year, updated.tm_mon, updated.tm_mday)
+        return datetime.datetime(updated.tm_year, updated.tm_mon, updated.tm_mday, 0, 0)
     if published is not None:
-        return datetime.date(published.tm_year, published.tm_mon, published.tm_mday)
+        return datetime.datetime(published.tm_year, published.tm_mon, published.tm_mday, 0, 0)
     # if we couldn't find a date, return start of epoch:
-    return datetime.date(1970,1,1)
+    return datetime.datetime(1970,1,1,0,0)
 
 # entry is a feedparser entry object -- one of
 # the objects you get by iterating over a parsed feed's entries collection.
@@ -40,12 +40,8 @@ def get_entry_url_and_type(entry):
     
 class Feed(object):
     def __init__(self):
-        # Derive download directory name and set our property.
-        # Property setter creates directory if it isn't already there.
-        dir = self.make_download_dir()
-        self.download_dir = dir
-            
-    
+        self._download_dir = ''
+        
     """
         Gets current list of episodes for this feed.
         Then, adds feeds which are not already on this
@@ -67,10 +63,10 @@ class Feed(object):
         # now sort the episodes list by date, with newest first:
         self.episodes.sort(key=attrgetter('episode_date'), reverse = True)
         # trim the list if there are more episodes than this feed's episodes_to_keep value:
-        episodes_to_ditch = self.episodes[self.episodes_to_keep:] # slice will be empty if list shorter than episodes_to_keep
+        episodes_to_ditch = self.episodes[self.number_to_keep:] # slice will be empty if list shorter than episodes_to_keep
         for ep_to_ditch in episodes_to_ditch:
             ep_to_ditch.delete() 
-        self.episodes = self.episodes[0:episodes_to_keep]
+        self.episodes = self.episodes[0:self.number_to_keep]
         self.last_updated = datetime.datetime.utcnow()
         self.save()
 
@@ -90,10 +86,13 @@ class Feed(object):
         cfg = PodConfig.get_instance()
         n = self.name.replace(' ','_')
         d = pd_util.remove_invalid_filename_chars(n)
-        return cfg['main']['top_dir'] + os.sep + cfg['main']['download_dir'] + os.sep + d
+        ret_string = cfg['main']['download_dir'] + os.sep + d
+        if not os.path.isdir(ret_string):
+            os.makedirs(ret_string)
+        return ret_string
     
     """
-        download episodes.
+        Download episodes.
         If overwrite is True, download even if episode file already exists. Default is False.
         If new_only is True, do not download episodes that have already been downloaded,
         even if the episode file is no longer there. Default is True.
@@ -133,17 +132,28 @@ class Feed(object):
     """
     @classmethod
     def get_feed_by_name(cls,name):
-        retf = None
-        q = FeedDao.select().where(fn.Upper(FeedDao.name) == name.upper())
-        if q.count() == 1:
-            retf = Feed.create_from_dao(q.get())
-        return retf
+        retfeed = None
+        retd = FeedDao.get_feed_dao_by_name(name)
+        if retd is not None:
+            retfeed = cls.create_from_dao(retd)
+        return retfeed
+    """
+        Return list of all feeds currently in database
+    """
+    @classmethod
+    def get_feeds(cls):
+        retlist = []
+        q = FeedDao.select()
+        for fd in q:
+            f = Feed.create_from_dao(fd)
+            retlist.append(f)
+        return retlist    
     
     """
         Given an url and, optionally, a name, build a Feed
         object.
         
-        If alt-name is supplied, use that; otherwise, use the name
+        If alt_name is supplied, use that; otherwise, use the name
         supplied by feedparser.parse(url).
         
         Whichever name is used, see if there's already a Feed by
@@ -251,6 +261,9 @@ class Feed(object):
         if newname is None:
             raise Exception('Feed name cannot be null.')
         self.dao.name = newname
+        dir = self.make_download_dir()
+        self.download_dir = dir
+
     @property
     def url(self):
         return self.dao.url
@@ -305,6 +318,9 @@ class Feed(object):
 
 
 class Episode(object):
+    def __init__(self):
+        self._feed = None
+        
     @classmethod
     def create_from_parsed_entry(cls,entry):
         ep = Episode()
@@ -314,7 +330,7 @@ class Episode(object):
         ep.episode_id = entry.get('id','')
         ep.episode_date = create_date_from_structs(
             entry.get('published_parsed',None), entry.get('updated_parsed',None))
-        ep.downloaded = datetime.date(1970,1,1)
+        ep.downloaded = datetime.datetime(1970,1,1,0,0)
         (ep.url, ep.mime_type) = get_entry_url_and_type(entry)
         return ep
         
@@ -324,7 +340,7 @@ class Episode(object):
         self.episode_id = entry.get('id','')
         self.episode_date = create_date_from_structs(
             entry.get('published_parsed',None), entry.get('updated_parsed',None))
-        self.downloaded = datetime.date(1970,1,1)
+        self.downloaded = datetime.datetime(1970,1,1,0,0)
         (self.url, self.mime_type) = get_entry_url_and_type(entry)
     @classmethod
     def create_from_dao(cls,dao):
@@ -357,11 +373,12 @@ class Episode(object):
         even if the episode file is no longer there. Default is True.
     """
     def download(self, overwrite = False, new_only = True):
-        filespec = self.feed.downlad_dir + os.sep + self.generate_filename
+        filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
         if overwrite == False and os.path.isfile(filespec):
             return ''
-        if new_only and self.downloaded != datetime.date(1970,1,1):
+        if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
             return ''
+        print('Will attempt to download episode to ' + filespec)
         dl_res = wget.download(self.url, out=filespec)
         self.downloaded = datetime.datetime.utcnow()
         self.save()
