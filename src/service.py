@@ -1,8 +1,13 @@
 from dto import Feed, Episode
-from dao import FeedDao, EpisodeDao
-
+from dao import FeedDao, EpisodeDao, init_database
+import pd_util
 
 class PodService(object):
+    @classmethod
+    def setup(cls):
+        pd_util.init_dirs()
+        init_database() 
+    
     """
         Query database and make a FeedDao object for
         each row. Use them to generate a list of Feed (DTO)
