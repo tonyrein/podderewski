@@ -37,15 +37,17 @@ def update(feeds_to_update = None):
         return
     else:
         feed_list = PodService.get_feeds()
-    PodService.upate_all_feeds()
+    PodService.update_all_feeds()
 
 """
-    Download episodes for all your subscribed feeds. Set new_only
-    to False if you want to re-download episodes that you've already
-    gotten. Set overwrite to True if you want to overwrite existing files.
+    Download episodes for subscribed feeds.
+    Set new_only to False if you want to re-download episodes that you've already
+    gotten.
+    Set overwrite to True if you want to overwrite existing files.
+    Pass a list of feed names if you don't want to download for all feeds.
 """
 def download(feeds_to_get = None):
-    PodService.download(feeds_to_get, overwrite = False, new_only = True)
+    PodService.download(feeds_to_get = None, overwrite = False, new_only = True)
 
 
 """

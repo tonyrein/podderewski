@@ -41,6 +41,7 @@ def get_entry_url_and_type(entry):
 class Feed(object):
     def __init__(self):
         self._download_dir = ''
+        self._logger = pd_util.configure_logging()
         
     """
         Gets current list of episodes for this feed.
@@ -51,17 +52,23 @@ class Feed(object):
     def update(self):
         self.load_episodes_from_db()
         fp = feedparser.parse(self.url)
+        self.logger.info('Updating episodes for ' + self.name)
         if fp and fp.entries:
             for e in fp.entries:
                 ep = Episode.create_from_parsed_entry(e)
+                self.logger.info('Processing episode ' + ep.title)
                 if not any(le.episode_id == ep.episode_id for le in self.episodes):
                     # this is a new episode.
+                    self.logger.info('New episode')
                     ep.feed = self
                     ep.dao.feed = self.dao
                     ep.save()
                     self.episodes.append(ep)
+                else:
+                    self.logger.info('Episode already exists')
         # now sort the episodes list by date, with newest first:
         self.episodes.sort(key=attrgetter('episode_date'), reverse = True)
+        self.logger.info('Feed has ' + len(self.episodes) + ' episodes; will keep ' + self.number_to_keep)
         # trim the list if there are more episodes than this feed's episodes_to_keep value:
         episodes_to_ditch = self.episodes[self.number_to_keep:] # slice will be empty if list shorter than episodes_to_keep
         for ep_to_ditch in episodes_to_ditch:
@@ -97,7 +104,7 @@ class Feed(object):
         If new_only is True, do not download episodes that have already been downloaded,
         even if the episode file is no longer there. Default is True.
     """
-    def download(self, overwrite = False, new_only = True):
+    def download(self, overwrite, new_only):
         for ep in self.episodes:
             ep.download(overwrite,new_only)
     
@@ -209,7 +216,7 @@ class Feed(object):
 
     
     # Properties -- name, url, description, numbr_to_keep, age_to_keep,
-    # is_subscribed, last_updated, download_dir
+    # is_subscribed, last_updated, download_dir, logger
     @property
     def name(self):
         return self.dao.name
@@ -271,8 +278,14 @@ class Feed(object):
         self._download_dir = newvalue
         if not os.path.isdir(newvalue):
             os.makedirs(newvalue)
-
-
+    @property
+    def logger(self):
+        return self._logger
+    @logger.setter
+    def logger(self,newvalue):
+        if newvalue is None:
+            raise Exception('Feed logger cannot be null.')
+        self._logger = newvalue
 
 class Episode(object):
     def __init__(self):
@@ -329,16 +342,19 @@ class Episode(object):
         If new_only is True, do not download episodes that have already been downloaded,
         even if the episode file is no longer there. Default is True.
     """
-    def download(self, overwrite = False, new_only = True):
+    def download(self, overwrite, new_only):
         filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
         if overwrite == False and os.path.isfile(filespec):
+            self.feed.logger.info('File already exists -- not downloading')
             return ''
         if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
+            self.feed.logger.info('File already downloaded')
             return ''
-        print('Will attempt to download episode to ' + filespec)
+        self.feed.logger.info('Will attempt to download episode to ' + filespec)
         dl_res = wget.download(self.url, out=filespec)
         self.downloaded = datetime.datetime.utcnow()
         self.save()
+        self.feed.logger.info('Download result: ' + dl_res)
         return dl_res
     
      # Properties

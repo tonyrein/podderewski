@@ -1,6 +1,7 @@
 from config import PodConfig
 import string
 import os
+import logging
 
 # From http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename-in-python
 # method renamed and modified slightly, to substitute '-' for invalid characters.
@@ -21,3 +22,31 @@ def init_dirs():
                  ):
         if not os.path.isdir(dir):
             os.makedirs(dir) # by default, creates with permissions 0777. Change?
+
+"""
+    Given a logging level string such as 'DEBUG' or 'INFO',
+    get the corresponding numeric logging level.
+"""
+def logging_level_from_string(levelstr):
+    numeric_level = getattr(logging, levelstr.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % levelstr)
+    return numeric_level
+
+"""
+    Use the information in the app's configuration
+    to set logging options.
+"""
+def configure_logging():
+    cfg = PodConfig.get_instance()
+    fn=cfg['main']['log_name']
+    levelstr=cfg['main']['log_level']
+    if levelstr == '': levelstr = 'NOTSET'
+    level = logging_level_from_string(levelstr)
+    if fn != 'CONSOLE':
+        log_filespec = cfg['main']['log_dir'] + os.sep + fn
+        logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', filename=log_filespec, level=level)
+    else:
+        logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=level)
+    return logging.getLogger()
+

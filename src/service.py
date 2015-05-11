@@ -30,7 +30,7 @@ class PodService(object):
         one by that name.
     """
     @classmethod
-    def add_feed(cls, feed_url, alt_name = None, episodes_to_keep = None):
+    def add_feed(cls, feed_url, alt_name, episodes_to_keep):
         f = Feed.init_from_url(feed_url, alt_name)
         if episodes_to_keep:
             f.number_to_keep = episodes_to_keep
@@ -52,7 +52,7 @@ class PodService(object):
         get only those subscribed feeds whose names are in feed_list.
     """
     @classmethod
-    def download(cls, overwrite = False, new_only = True, feed_list = None):
+    def download(cls, overwrite, new_only, feed_list):
         if feed_list is None:
             feeds_to_get = cls.get_feeds()
         else:
