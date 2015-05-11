@@ -68,7 +68,7 @@ class Feed(object):
                     self.logger.info('Episode already exists')
         # now sort the episodes list by date, with newest first:
         self.episodes.sort(key=attrgetter('episode_date'), reverse = True)
-        self.logger.info('Feed has ' + len(self.episodes) + ' episodes; will keep ' + self.number_to_keep)
+        self.logger.info('Feed has ' + str(len(self.episodes)) + ' episodes; will keep ' + str(self.number_to_keep))
         # trim the list if there are more episodes than this feed's episodes_to_keep value:
         episodes_to_ditch = self.episodes[self.number_to_keep:] # slice will be empty if list shorter than episodes_to_keep
         for ep_to_ditch in episodes_to_ditch:
