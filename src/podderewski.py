@@ -47,7 +47,7 @@ def update(feeds_to_update = None):
     Pass a list of feed names if you don't want to download for all feeds.
 """
 def download(feeds_to_get = None):
-    PodService.download(feeds_to_get = None, overwrite = False, new_only = True)
+    PodService.download(feed_list = feeds_to_get, overwrite = False, new_only = True)
 
 
 """

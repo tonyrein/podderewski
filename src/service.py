@@ -53,10 +53,10 @@ class PodService(object):
     """
     @classmethod
     def download(cls, overwrite, new_only, feed_list):
+        feeds_to_get = []
         if feed_list is None:
             feeds_to_get = cls.get_feeds()
         else:
-            feeds_to_get = []
             for name in feed_list:
                 f = PodService.get_feed_by_name(name)
                 if f:
