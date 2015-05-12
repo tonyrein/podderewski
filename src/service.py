@@ -8,6 +8,17 @@ class PodService(object):
         pd_util.init_dirs()
         init_database() 
     
+    
+    @classmethod
+    def feed_list_from_names(cls, name_list):
+        if name_list is None:
+            return None
+        ret_list = []
+        for s in name_list:
+            feed = cls.get_feed_by_name(s)
+            if feed:
+                ret_list.append(feed)
+        return ret_list
     """
         Query database and make a FeedDao object for
         each row. Use them to generate a list of Feed (DTO)
@@ -38,6 +49,21 @@ class PodService(object):
         return f
 
     @classmethod
+    def update_subscribed_feeds(cls,feeds_to_update = None):
+        feed_list = []
+    if feeds_to_update:
+        feed_list = cls.feed_list_from_names(feeds_to_update)
+#         for s in feeds_to_update:
+#             feed = cls.get_feeds_by_name(s)
+#             if feed:
+#                 feed_list.append(feed)
+    else:
+        feed_list = cls.get_feeds()
+    for feed in feed_list:
+        if feed.is_subscribed:
+            feed.update()
+                
+    @classmethod
     def update_all_feeds(cls):
         for feed in cls.get_feeds():
             if feed.is_subscribed:
@@ -57,10 +83,11 @@ class PodService(object):
         if feed_list is None:
             feeds_to_get = cls.get_feeds()
         else:
-            for name in feed_list:
-                f = PodService.get_feed_by_name(name)
-                if f:
-                    feeds_to_get.append(f)
+            feeds_to_get = cls.feed_list_from_names(feed_list)
+#             for name in feed_list:
+#                 f = PodService.get_feed_by_name(name)
+#                 if f:
+#                     feeds_to_get.append(f)
         for feed in feeds_to_get:
             if feed.is_subscribed:
                 feed.download(overwrite,new_only)
@@ -76,10 +103,11 @@ class PodService(object):
         if feed_list is None: # do all
             feeds_to_set = cls.get_feeds()
         else: # list of names supplied
-            for s in feed_list:
-                f = cls.get_feed_by_name(s)
-                if f:
-                    feeds_to_set.append(f)
+            feeds_to_set = cls.feed_list_from_names(feed_list)
+#             for s in feed_list:
+#                 f = cls.get_feed_by_name(s)
+#                 if f:
+#                     feeds_to_set.append(f)
         for feed in feeds_to_set:
             if feed.is_subscribed != state:
                 feed.is_subscribed = state
@@ -102,6 +130,35 @@ class PodService(object):
         cls._set_subscribe(False, feed_list)
         
             
+    @classmethod
+    def rename_feed(cls, feed_name, new_name):
+        feed = cls.get_feed_by_name(feed_name)
+        if feed:
+            feed.name = new_name
+            feed.save()
+        
+    @classmethod
+    def set_episodes_keep_count(cls, count, feed_list = None):
+        feeds_to_change = []
+        if feed_list is None:
+            feeds_to_change = cls.get_feeds()
+        else:
+            feeds_to_change = cls.feed_list_from_names(feed_list)
+        for feed in feeds_to_change:
+            feed.number_to_keep = count
+            feed.save()
             
+    @classmethod
+    def change_feed_description(cls, new_description, feed_list = None):
+        feeds_to_change = []
+        if feed_list is None:
+            feeds_to_change = cls.get_feeds()
+        else:
+            feeds_to_change = cls.feed_list_from_names(feed_list)
+        for feed in feeds_to_change:
+            feed.description = new_description
+            feed.save()
+            
+                
                 
     
