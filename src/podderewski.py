@@ -144,6 +144,15 @@ def unsubscribe(feed_list = None):
     PodService.unsubscribe(feed_list)
     return RET_SUCCESS
 
+def rename(**kwargs):
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else None
+    if feed_list is None or len(feed_list) != 1:
+        print("The rename command requires exactly one feed name -- none supplied")
+        return RET_ARGS_MISSING
+    feed_name = feed_list[0]
+    PodService.rename(feed_name, )
+    print(feed_list if feed_list is not None else 'No feeds specified')
+
 """
     When this feature is implemented it will allow setting
     of features of a Feed. For example:
