@@ -13,12 +13,16 @@
     * 'unsubscribe' to unsubscribe to a feed which you've already added. May be abbreviated 'un' (The feed will remain on the list,
         and you can subscribe to it again with "podderewski subscribe /feed name/"
     * 'set' to set attributes of a feed. May be abbreviated 'se'
+    * 'rename' to rename a feed. May be abbreviated 're'
+    * 'list' to list feeds
     
     "switches" are:
     
     * "-f" or "--feeds" -- a list of one or more feed names
     
     * "--url" or "-u" -- URL of a feed
+    
+    * "--newname" or "-n" -- new name to apply with rename command
     
     * "--property" or "-p" -- name of a feed property. Allowable properties are:
         keep -- number of episodes this feed should keep
@@ -79,33 +83,23 @@ RET_BAD_ARG_TYPE=3
 
 """
     Update episode lists for your subscribed feeds.
-    TODO: Make this handle the feeds_to_update list like download() handles
-    its list.
+    If no list is specified, PodService method will update all subscribed feeds
 """
 def update(**kwargs):
     print("Update called")
-    feed_list = kwargs['feeds'] if 'feeds' in kwargs else None
-    print(feed_list if feed_list is not None else 'No feeds specified')
-    #PodService.update_subscribed_feeds(feed_list)
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
+    print(feed_list if len(feed_list) > 0  else 'No feeds specified')
+    PodService.update_subscribed_feeds(feed_list)
     return RET_SUCCESS
-#     feed_list = []
-#     if feeds_to_update:
-#         print("Sorry -- this feature not yet implemented.")
-#         return
-#     else:
-#         feed_list = PodService.get_feeds()
-#     PodService.update_all_feeds()
 
 """
     Download episodes for subscribed feeds.
-    Set new_only to False if you want to re-download episodes that you've already
-    gotten.
-    Set overwrite to True if you want to overwrite existing files.
-    Pass a list of feed names if you don't want to download for all feeds.
+    Optionally pass a list of feed names; if no list is supplied,
+    PodService method will download episodes for all subscribed feeds.
 """
 def download(**kwargs):
-    feed_list = kwargs['feeds'] if 'feeds' in kwargs else None
-    print(feed_list if feed_list is not None else 'No feeds specified')
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
+    print(feed_list if len(feed_list) > 0  else 'No feeds specified')
     
     PodService.download(feed_list)
     return RET_SUCCESS
@@ -133,25 +127,43 @@ def add(**kwargs):
     Subscribe to feeds which you've already added. If you supply a list of names,
     only those feeds will be affected; otherwise all will be subscribed.
 """        
-def subscribe(feed_list = None):
+def subscribe(**kwargs):
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.subscribe(feed_list)
     return RET_SUCCESS
 """
     Unsubscribe from feeds which you've already added. If you supply a list of names,
     only those feeds will be affected; otherwise all will be unsubscribed.
 """        
-def unsubscribe(feed_list = None):
+def unsubscribe(**kwargs):
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.unsubscribe(feed_list)
     return RET_SUCCESS
 
-def rename(**kwargs):
-    feed_list = kwargs['feeds'] if 'feeds' in kwargs else None
-    if feed_list is None or len(feed_list) != 1:
+"""
+    Give a feed a new name.
+    Pass the name of the feed, and the new name.
+"""
+def rename_feed(**kwargs):
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
+    if len(feed_list) != 1:
         print("The rename command requires exactly one feed name -- none supplied")
         return RET_ARGS_MISSING
     feed_name = feed_list[0]
-    PodService.rename(feed_name, )
-    print(feed_list if feed_list is not None else 'No feeds specified')
+    new_name = kwargs['newname'] if 'newname' in kwargs else ''
+    new_name = new_name.strip()
+    if new_name == '':
+        print("The rename command requires a new name")
+        return RET_ARGS_MISSING
+    PodService.rename_feed(feed_name, new_name)
+    return RET_SUCCESS
+
+def list_feeds(**kwargs):
+    feed_list = PodService.get_feeds()
+    if feed_list:
+        for feed in feed_list:
+            print(feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") )
+    return RET_SUCCESS
 
 """
     When this feature is implemented it will allow setting
@@ -210,6 +222,9 @@ def main():
                   'su': subscribe,
                   'unsubscribe': unsubscribe,
                   'un': unsubscribe,
+                  'rename': rename_feed,
+                  're': rename_feed,
+                  'list': list_feeds,
                   } 
     allowable_commands = [ k for k in dispatch_table ]
     
@@ -225,16 +240,18 @@ def main():
     parser.add_argument("--property", "-p", help="Feed property to change.", required = False)
     
     parser.add_argument("--url", "-u", help = "URL of feed to add.", required = False)
+    
+    parser.add_argument("--newname", "-n", help="New name for rename command to apply", required = False)
 
     args = parser.parse_args()
-    PodService.setup()
+
     cmd = args.command
     print("Command: " + cmd)
     if not cmd in dispatch_table:
         print(cmd + " is not a valid command")
         sys.exit(1)
-    
-#     retval = dispatch_table[cmd]()
+        
+    PodService.setup()
     retval = dispatch_table[cmd](**vars(args))
     sys.exit(retval)
 

@@ -100,7 +100,7 @@ class PodService(object):
     @classmethod
     def _set_subscribe(cls, state = None, feed_list = None):
         feeds_to_set = []
-        if feed_list is None: # do all
+        if feed_list is None or len(feed_list) == 0: # do all
             feeds_to_set = cls.get_feeds()
         else: # list of names supplied
             feeds_to_set = cls.feed_list_from_names(feed_list)
@@ -126,7 +126,7 @@ class PodService(object):
         of names, set their is_subscribed state to False.
     """
     @classmethod
-    def subscribe(cls, feed_list = None):
+    def unsubscribe(cls, feed_list = None):
         cls._set_subscribe(False, feed_list)
         
             
