@@ -51,18 +51,18 @@ class PodService(object):
     @classmethod
     def update_subscribed_feeds(cls,feeds_to_update = None):
         feed_list = []
-    if feeds_to_update:
-        feed_list = cls.feed_list_from_names(feeds_to_update)
+        if feeds_to_update:
+            feed_list = cls.feed_list_from_names(feeds_to_update)
 #         for s in feeds_to_update:
 #             feed = cls.get_feeds_by_name(s)
 #             if feed:
 #                 feed_list.append(feed)
-    else:
-        feed_list = cls.get_feeds()
-    for feed in feed_list:
-        if feed.is_subscribed:
-            feed.update()
-                
+        else:
+            feed_list = cls.get_feeds()
+        for feed in feed_list:
+            if feed.is_subscribed:
+                feed.update()
+                    
     @classmethod
     def update_all_feeds(cls):
         for feed in cls.get_feeds():
@@ -78,7 +78,7 @@ class PodService(object):
         get only those subscribed feeds whose names are in feed_list.
     """
     @classmethod
-    def download(cls, overwrite, new_only, feed_list):
+    def download(cls, feed_list, overwrite=False, new_only=True):
         feeds_to_get = []
         if feed_list is None:
             feeds_to_get = cls.get_feeds()
