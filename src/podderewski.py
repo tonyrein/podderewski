@@ -142,7 +142,7 @@ def unsubscribe(**kwargs):
 
 """
     Give a feed a new name.
-    Pass the name of the feed, and the new name.
+    Pass the current name of the feed, and the new name.
 """
 def rename_feed(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
@@ -158,12 +158,20 @@ def rename_feed(**kwargs):
     PodService.rename_feed(feed_name, new_name)
     return RET_SUCCESS
 
+def describe_feeds(**kwargs):
+    feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
+    PodService.change_feed_descriptions(feed_list)
+    return RET_SUCCESS
+
 def list_feeds(**kwargs):
     feed_list = PodService.get_feeds()
     if feed_list:
         for feed in feed_list:
             print(feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") )
     return RET_SUCCESS
+
+
+
 
 """
     When this feature is implemented it will allow setting
@@ -243,6 +251,8 @@ def main():
     
     parser.add_argument("--newname", "-n", help="New name for rename command to apply", required = False)
 
+    parser.add_argument("--description", "-d", help="New description for feed or list of feeds", required = False)
+    
     args = parser.parse_args()
 
     cmd = args.command
