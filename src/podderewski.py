@@ -14,7 +14,7 @@
         and you can subscribe to it again with "podderewski subscribe /feed name/"
     * 'set' to set attributes of a feed. May be abbreviated 'se'
     * 'rename' to rename a feed. May be abbreviated 're'
-    * 'list' to list feeds
+    * 'list' to list feeds. May be abbreviated 'li'
     
     "switches" are:
     
@@ -233,6 +233,7 @@ def main():
                   'rename': rename_feed,
                   're': rename_feed,
                   'list': list_feeds,
+                  'li': list_feeds,
                   } 
     allowable_commands = [ k for k in dispatch_table ]
     
