@@ -157,7 +157,11 @@ def rename_feed(**kwargs):
         return pd_util.RET_ARGS_MISSING
     PodService.rename_feed(feed_name, new_name)
     return pd_util.RET_SUCCESS
-
+# return codes from command methods:
+RET_SUCCESS=0
+RET_ARGS_MISSING=1
+RET_BAD_ARG_COMBO=2
+RET_BAD_ARG_TYPE=3
 def describe_feeds(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.change_feed_descriptions(feed_list)

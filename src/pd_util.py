@@ -50,7 +50,7 @@ def logging_level_from_string(levelstr):
 def configure_logging():
     cfg = PodConfig.get_instance()
     fn=cfg['main']['log_name']
-    levelstr=cfg['main']['log']
+    levelstr=cfg['main']['log_level']
     if levelstr == '': levelstr = 'NOTSET'
     level = logging_level_from_string(levelstr)
     if fn != 'CONSOLE':
