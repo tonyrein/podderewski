@@ -88,7 +88,10 @@ RET_BAD_ARG_TYPE=3
 def update(**kwargs):
     print("Update called")
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
-    print(feed_list if len(feed_list) > 0  else 'No feeds specified')
+    if feed_list is None or len(feed_list == 0):
+        print("No feeds specified")
+    else:
+        print(feed_list)
     PodService.update_subscribed_feeds(feed_list)
     return RET_SUCCESS
 
@@ -99,8 +102,10 @@ def update(**kwargs):
 """
 def download(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
-    print(feed_list if len(feed_list) > 0  else 'No feeds specified')
-    
+    if feed_list is None or len(feed_list == 0):
+        print("No feeds specified")
+    else:
+        print(feed_list)    
     PodService.download(feed_list)
     return RET_SUCCESS
 
@@ -146,7 +151,7 @@ def unsubscribe(**kwargs):
 """
 def rename_feed(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
-    if len(feed_list) != 1:
+    if feed_list is None or len(feed_list) != 1:
         print("The rename command requires exactly one feed name -- none supplied")
         return RET_ARGS_MISSING
     feed_name = feed_list[0]
