@@ -72,12 +72,8 @@ from argparse import RawTextHelpFormatter
 import sys
 
 from service import PodService
+import pd_util
 
-# return codes from command methods:
-RET_SUCCESS=0
-RET_ARGS_MISSING=1
-RET_BAD_ARG_COMBO=2
-RET_BAD_ARG_TYPE=3
 
 
 
@@ -93,7 +89,7 @@ def update(**kwargs):
     else:
         print(feed_list)
     PodService.update_subscribed_feeds(feed_list)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 """
     Download episodes for subscribed feeds.
@@ -107,7 +103,7 @@ def download(**kwargs):
     else:
         print(feed_list)    
     PodService.download(feed_list)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 
 """
@@ -117,16 +113,15 @@ def download(**kwargs):
     After the feed is added, it is not necessary to call subscribe() on it -- it will be
     subscribed as part of the addition process.
 """            
-#def add(url=None):
 def add(**kwargs):
     url = kwargs['url'] if 'url' in kwargs else ''
     url = url.strip()
     if url == '':
         print("You must supply the URL of the feed to be added")
-        return RET_ARGS_MISSING
+        return pd_util.RET_ARGS_MISSING
     print("Adding " + url)
     #PodService.add_feed(url)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 """
     Subscribe to feeds which you've already added. If you supply a list of names,
@@ -135,7 +130,7 @@ def add(**kwargs):
 def subscribe(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.subscribe(feed_list)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 """
     Unsubscribe from feeds which you've already added. If you supply a list of names,
     only those feeds will be affected; otherwise all will be unsubscribed.
@@ -143,7 +138,7 @@ def subscribe(**kwargs):
 def unsubscribe(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.unsubscribe(feed_list)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 """
     Give a feed a new name.
@@ -153,27 +148,27 @@ def rename_feed(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     if feed_list is None or len(feed_list) != 1:
         print("The rename command requires exactly one feed name -- none supplied")
-        return RET_ARGS_MISSING
+        return pd_util.RET_ARGS_MISSING
     feed_name = feed_list[0]
     new_name = kwargs['newname'] if 'newname' in kwargs else ''
     new_name = new_name.strip()
     if new_name == '':
         print("The rename command requires a new name")
-        return RET_ARGS_MISSING
+        return pd_util.RET_ARGS_MISSING
     PodService.rename_feed(feed_name, new_name)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 def describe_feeds(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.change_feed_descriptions(feed_list)
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 def list_feeds(**kwargs):
     feed_list = PodService.get_feeds()
     if feed_list:
         for feed in feed_list:
             print(feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") )
-    return RET_SUCCESS
+    return pd_util.RET_SUCCESS
 
 
 
@@ -193,30 +188,30 @@ def list_feeds(**kwargs):
 def set_property(feed_list=None,key=None,value=None):
     # Make sure arguments are valid:
     if feed_list is None or key is None or value is None:
-        return RET_ARGS_MISSING
+        return pd_util.RET_ARGS_MISSING
     
     if key == 'name':
         # can only have one feed.
         if len(feed_list) != 1:
-            return RET_BAD_ARG_COMBO
+            return pd_util.RET_BAD_ARG_COMBO
         feed_name = feed_list[0]
         value = value.strip()
         if value == '': # can't have an empty name
-            return RET_ARGS_MISSING
+            return pd_util.RET_ARGS_MISSING
         PodService.rename_feed(feed_name, value)
-        return RET_SUCCESS
+        return pd_util.RET_SUCCESS
     
     if key == 'keep':
         # value needs to be an integer
         i = int(value) # Will raise ValueError if string isn't valid integer
         PodService.set_episodes_keep_count(i, feed_list)
-        return RET_SUCCESS
+        return pd_util.RET_SUCCESS
     
     if key == 'description':
         PodService.change_feed_description(value, feed_list)
-        return RET_SUCCESS
+        return pd_util.RET_SUCCESS
     
-    return RET_BAD_ARG_COMBO
+    return pd_util.RET_BAD_ARG_COMBO
         
     
     

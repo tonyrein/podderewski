@@ -3,6 +3,16 @@ import string
 import os
 import logging
 
+
+# return codes from command methods:
+RET_SUCCESS=0
+RET_ARGS_MISSING=1
+RET_BAD_ARG_COMBO=2
+RET_BAD_ARG_TYPE=3
+RET_FILE_NOT_FOUND=4
+RET_PERMISSION_ERROR=5
+RET_GENERAL_ERROR=6
+
 # From http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename-in-python
 # method renamed and modified slightly, to substitute '-' for invalid characters.
 
@@ -40,7 +50,7 @@ def logging_level_from_string(levelstr):
 def configure_logging():
     cfg = PodConfig.get_instance()
     fn=cfg['main']['log_name']
-    levelstr=cfg['main']['log_level']
+    levelstr=cfg['main']['log']
     if levelstr == '': levelstr = 'NOTSET'
     level = logging_level_from_string(levelstr)
     if fn != 'CONSOLE':
@@ -50,3 +60,4 @@ def configure_logging():
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=level)
     return logging.getLogger()
 
+    
