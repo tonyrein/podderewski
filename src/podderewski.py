@@ -14,7 +14,8 @@
         and you can subscribe to it again with "podderewski subscribe /feed name/"
     * 'set' to set attributes of a feed. May be abbreviated 'se'
     * 'rename' to rename a feed. May be abbreviated 're'
-    * 'list' to list feeds. May be abbreviated 'li'
+    * 'list' to list feeds. May be abbreviated 'li'. By default includes only subscribed feeds.
+    * 'detail' to show detailed information for one or more feeds. May be abbreviated 'de' By default includes only subscribed feeds. 
     
     "switches" are:
     
@@ -33,6 +34,7 @@
         
     * "--value" or "-v" -- value to apply to above property
     
+    * "--all" or "-a" -- apply "list" or "detail" command to all feeds, even unsubscribed.
     Examples:
     
     * To update episode lists for all subscribed feeds:
@@ -54,7 +56,7 @@
         (Note that when the feed is added, it is initially set to "subscribed." You do not need to
         call podderewski subscribe.)
     
-    
+        
     Additional arguments for commands:
         * update or download: Optional - name of feed or feeds, if you don't want to apply the command to all feeds.
         * add: Mandatory - URL of feed to add
@@ -105,7 +107,30 @@ def download(**kwargs):
     PodService.download(feed_list)
     return pd_util.RET_SUCCESS
 
+def _do_feed_detail(f):
+    pass
 
+"""
+    Print detailed information about indicated feed(s).
+    If no feed list is supplied, will apply to all subscribed feeds.
+    If feed list is supplied, will apply to all subscribed feeds in supplied list.
+    To apply to all feeds, subscribed or not, use the "--all" switch. 
+"""
+def print_feed_detail(**kwargs):
+    # First, figure out which feeds this will apply to.
+    feeds = []
+    # Did caller supply list? If so, use that list; otherwise, use all
+    if 'feeds' in kwargs and kwargs['feeds'] is not None and len(kwargs['feeds']) > 0:
+        feeds = PodService.feed_list_from_names(kwargs['feeds'])
+    else:
+        feeds = PodService.get_feeds()
+    if feeds:
+        do_all = 'all' in kwargs and kwargs['all'] == True
+        if do_all == False:
+            feeds = [f for f in feeds if f.is_subscribed ]
+        for f in feeds:
+            self._do_feed_detail(f)
+    return pd_util.RET_SUCCESS
 """
     Add a feed to our list.
     url: the rss/atom etc url of the feed
@@ -167,8 +192,13 @@ def describe_feeds(**kwargs):
     PodService.change_feed_descriptions(feed_list)
     return pd_util.RET_SUCCESS
 
+
 def list_feeds(**kwargs):
-    feed_list = PodService.get_feeds()
+    do_all = 'all' in kwargs and kwargs['all'] == True
+    if do_all:
+        feed_list = PodService.get_feeds()
+    else:
+        feed_list = [ f for f in PodService.get_feeds() if f.is_subscribed ]
     if feed_list:
         for feed in feed_list:
             print(feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") )
@@ -176,46 +206,6 @@ def list_feeds(**kwargs):
 
 
 
-
-"""
-    When this feature is implemented it will allow setting
-    of features of a Feed. For example:
-        set_property('Car Talk', 'keep', 30) to configure this feed
-        to retain 30 episodes.
-    Here is a list of properties available:
-        'keep': number of episodes to keep
-        'name': name of the feed. Changing this will also change
-            the directory where this episode's feeds are stored - the
-            directory will have the same name as the feed.
-        'description'
-"""
-def set_property(feed_list=None,key=None,value=None):
-    # Make sure arguments are valid:
-    if feed_list is None or key is None or value is None:
-        return pd_util.RET_ARGS_MISSING
-    
-    if key == 'name':
-        # can only have one feed.
-        if len(feed_list) != 1:
-            return pd_util.RET_BAD_ARG_COMBO
-        feed_name = feed_list[0]
-        value = value.strip()
-        if value == '': # can't have an empty name
-            return pd_util.RET_ARGS_MISSING
-        PodService.rename_feed(feed_name, value)
-        return pd_util.RET_SUCCESS
-    
-    if key == 'keep':
-        # value needs to be an integer
-        i = int(value) # Will raise ValueError if string isn't valid integer
-        PodService.set_episodes_keep_count(i, feed_list)
-        return pd_util.RET_SUCCESS
-    
-    if key == 'description':
-        PodService.change_feed_description(value, feed_list)
-        return pd_util.RET_SUCCESS
-    
-    return pd_util.RET_BAD_ARG_COMBO
         
     
     
@@ -228,8 +218,6 @@ def main():
                   'download': download,
                   'dl': download,
                   'add': add,
-                  'set': set_property,
-                  'se': set_property,
                   'subscribe': subscribe,
                   'su': subscribe,
                   'unsubscribe': unsubscribe,
@@ -238,25 +226,24 @@ def main():
                   're': rename_feed,
                   'list': list_feeds,
                   'li': list_feeds,
+                  'info': print_feed_detail,
+                  'in': print_feed_detail,
                   } 
     allowable_commands = [ k for k in dispatch_table ]
     
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
     parser.add_argument('command', choices = allowable_commands,
-    help="Allowable commands (you must supply exactly one):\n\n*'update' or 'up' to update feeds\n*'subscribe' or 'unsubscribe' to subscribe\n\tor unsubscribe from feeds\n*'download' or 'dl' to download episodes\n*'add' to add a feed\n*'set' to set feed attributes.")
+    help="Allowable commands (you must supply exactly one):\n\n*'update' or 'up' to update feeds\n*'subscribe' or 'unsubscribe' to subscribe\n\tor unsubscribe from feeds\n*'download' or 'dl' to download episodes\n*'add' to add a feed\n*'info' to show details for one or more feeds.\n*'list' to list feeds.")
 
     parser.add_argument("--feeds", "-f", nargs="*", help="One or more feed names, with each one in quotes", required = False)
-    
-    parser.add_argument("--value", "-v", help="Value to set for property specified by --property switch",
-    required = False)
-    
-    parser.add_argument("--property", "-p", help="Feed property to change.", required = False)
     
     parser.add_argument("--url", "-u", help = "URL of feed to add.", required = False)
     
     parser.add_argument("--newname", "-n", help="New name for rename command to apply", required = False)
 
     parser.add_argument("--description", "-d", help="New description for feed or list of feeds", required = False)
+    
+    parser.add_argument("--all", "-a", help='Apply "list" or "detail" command to all feeds, including unsubscribed ones', required=False, action='store_true')
     
     args = parser.parse_args()
 
