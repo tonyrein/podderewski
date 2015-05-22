@@ -9,7 +9,7 @@ import feedparser
 # Imports: stdlib:
 import datetime
 import exceptions
-import urllib
+import urllib2
 from urlparse import urlparse
 import os.path
 from operator import attrgetter
@@ -367,7 +367,7 @@ class Episode(object):
         If new_only is True, do not download episodes that have already been downloaded,
         even if the episode file is no longer there. Default is True.
     """
-    def download(self, overwrite, new_only):
+    def download2(self, overwrite, new_only):
         filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
         if overwrite == False and os.path.isfile(filespec):
             self.feed.logger.info('File already exists -- not downloading')
@@ -390,6 +390,38 @@ class Episode(object):
             self.downloaded = datetime.datetime.utcnow()
             self.save()
             return pd_util.RET_SUCCESS
+    
+    
+    """
+        Download this episode.
+        If overwrite is True, download even if episode file already exists. Default is False.
+        If new_only is True, do not download episodes that have already been downloaded,
+        even if the episode file is no longer there. Default is True.
+    """
+    def download(self, overwrite, new_only):
+        self.feed.logger.info(self.feed.name + ': Processing episode ' + self.title)
+        filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
+        if overwrite == False and os.path.isfile(filespec):
+            self.feed.logger.info('File already exists -- not downloading')
+            return pd_util.RET_FILE_ALREADY_EXISTS
+        if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
+            self.feed.logger.info('Episode already downloaded')
+            return pd_util.RET_FILE_ALREADY_DOWNLOADED
+        self.feed.logger.info('Will attempt to download episode as ' + filespec)
+        try:
+            dl_data=urllib2.urlopen(self.url)
+            output = open(filespec,'wb')
+            output.write(dl_data.read())
+            output.close()
+        except Exception as e:
+            emsg = self.feed.name + ': Problem downloading episode ' + self.title + ': ' + str(e)
+            self.feed.logger.error(emsg)
+            return pd_util.RET_GENERAL_ERROR
+
+        self.feed.logger.info('Successfully downloaded ' + self.title + ' as' + filespec)
+        self.downloaded = datetime.datetime.utcnow()
+        self.save()
+        return pd_util.RET_SUCCESS
     
     
      # Properties
