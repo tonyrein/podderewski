@@ -494,7 +494,14 @@ class Episode(object):
         self.dao.episode_date = newvalue
     
     
-    
-    
+    def __str__(self):
+        s = self.title + ': ' + self.description
+        s +="\nEpisode date: " + self.episode_date.strftime('%Y-%b-%d') + ', '
+        if self.has_been_downloaded():
+            s += 'downloaded ' + self.downloaded.strftime('%Y-%b-%d %H:%M') + '\nFilename: ' + self.generate_filename()
+        else:
+            s += 'not yet downloaded'
+        return s
+        
     
        

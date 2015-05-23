@@ -108,20 +108,20 @@ def download(**kwargs):
     PodService.download(feed_list)
     return pd_util.RET_SUCCESS
 
-
-def _get_episode_detail_string(e):
-    if e is None or not isinstance(e,Episode):
-        return ''
-    s = e.title + ': ' + e.description
-    s +="Episode date: " + e.episode_date + ', '
-    if e.has_been_downloaded():
-        s += 'downloaded ' + str(e.downloaded) + '\nFilename: ' + e.generate_filename()
-    else:
-        s += 'not yet downloaded'
-    return s
     
 def _get_feed_detail_string(f):
     pass
+# 
+# f.name + '\n'
+# URL: f.url + '\n'
+# f.description
+# Last updated f.last_updated.strftime(....)
+# Subscribed? Y  Nr. of episodes to keep: 5
+# Contains following episodes:
+# i = 1
+# for e in f.episodes:
+#     print(str(i) + '. ' + e + '\n\n')
+#     i += 1
 
 """
     Print detailed information about indicated feed(s).
