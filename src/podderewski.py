@@ -109,18 +109,18 @@ def download(**kwargs):
     return pd_util.RET_SUCCESS
 
 
-def _do_episode_detail(e):
+def _get_episode_detail_string(e):
     if e is None or not isinstance(e,Episode):
-        return
-    print(e.title + ': ' + e.description)
-    s="Episode date: " + e.episode_date + ', '
+        return ''
+    s = e.title + ': ' + e.description
+    s +="Episode date: " + e.episode_date + ', '
     if e.has_been_downloaded():
-        s += 'downloaded ' + str(e.downloaded)
-        print(s)
-        print('Filename: ' + e.generate_filename())
-    print("Episode date: " + e.episode_date + )
+        s += 'downloaded ' + str(e.downloaded) + '\nFilename: ' + e.generate_filename()
+    else:
+        s += 'not yet downloaded'
+    return s
     
-def _do_feed_detail(f):
+def _get_feed_detail_string(f):
     pass
 
 """
