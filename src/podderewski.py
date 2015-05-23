@@ -74,6 +74,7 @@ from argparse import RawTextHelpFormatter
 import sys
 
 from service import PodService
+from dto import Feed, Episode
 import pd_util
 
 
@@ -107,6 +108,18 @@ def download(**kwargs):
     PodService.download(feed_list)
     return pd_util.RET_SUCCESS
 
+
+def _do_episode_detail(e):
+    if e is None or not isinstance(e,Episode):
+        return
+    print(e.title + ': ' + e.description)
+    s="Episode date: " + e.episode_date + ', '
+    if e.has_been_downloaded():
+        s += 'downloaded ' + str(e.downloaded)
+        print(s)
+        print('Filename: ' + e.generate_filename())
+    print("Episode date: " + e.episode_date + )
+    
 def _do_feed_detail(f):
     pass
 
@@ -182,11 +195,7 @@ def rename_feed(**kwargs):
         return pd_util.RET_ARGS_MISSING
     PodService.rename_feed(feed_name, new_name)
     return pd_util.RET_SUCCESS
-# return codes from command methods:
-RET_SUCCESS=0
-RET_ARGS_MISSING=1
-RET_BAD_ARG_COMBO=2
-RET_BAD_ARG_TYPE=3
+
 def describe_feeds(**kwargs):
     feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
     PodService.change_feed_descriptions(feed_list)

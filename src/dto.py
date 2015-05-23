@@ -293,7 +293,10 @@ class Feed(object):
 class Episode(object):
     def __init__(self):
         self._feed = None
-        
+    
+    def has_been_downloaded(self):
+        return self.downloaded != datetime.datetime(1970,1,1,0,0)
+      
     @classmethod
     def create_from_parsed_entry(cls,entry):
         ep = Episode()
@@ -404,7 +407,7 @@ class Episode(object):
         if overwrite == False and os.path.isfile(filespec):
             self.feed.logger.info('File already exists -- not downloading')
             return pd_util.RET_FILE_ALREADY_EXISTS
-        if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
+        if new_only and self.has_been_downloaded():
             self.feed.logger.info('Episode already downloaded')
             return pd_util.RET_FILE_ALREADY_DOWNLOADED
         self.feed.logger.info('Will attempt to download episode as ' + filespec)
