@@ -14,6 +14,7 @@ RET_PERMISSION_ERROR=5
 RET_GENERAL_ERROR=6
 RET_FILE_ALREADY_EXISTS=7
 RET_FILE_ALREADY_DOWNLOADED=8
+RET_INVALID_COMMAND=9
 
 # From http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename-in-python
 # method renamed and modified slightly, to substitute '-' for invalid characters.

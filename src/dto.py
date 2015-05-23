@@ -353,59 +353,6 @@ class Episode(object):
         If new_only is True, do not download episodes that have already been downloaded,
         even if the episode file is no longer there. Default is True.
     """
-    def download1(self, overwrite, new_only):
-        filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
-        if overwrite == False and os.path.isfile(filespec):
-            self.feed.logger.info('File already exists -- not downloading')
-            return ''
-        if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
-            self.feed.logger.info('File already downloaded')
-            return ''
-        self.feed.logger.info('Will attempt to download episode to ' + filespec)
-        dl_res = wget.download(self.url, out=filespec)
-        self.downloaded = datetime.datetime.utcnow()
-        self.save()
-        self.feed.logger.info('Download result: ' + dl_res)
-        return dl_res
-    
-    
-    """
-        Download this episode.
-        If overwrite is True, download even if episode file already exists. Default is False.
-        If new_only is True, do not download episodes that have already been downloaded,
-        even if the episode file is no longer there. Default is True.
-    """
-    def download2(self, overwrite, new_only):
-        filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
-        if overwrite == False and os.path.isfile(filespec):
-            self.feed.logger.info('File already exists -- not downloading')
-            return ''
-        if new_only and self.downloaded != datetime.datetime(1970,1,1,0,0):
-            self.feed.logger.info('File already downloaded')
-            return ''
-        self.feed.logger.info('Will attempt to download episode to ' + filespec)
-        urlopener = urllib.request.URLopener()
-        try:
-            dl_res = urlopener.retrieve(self.url, filespec)
-        except Exception as e:
-            dl_res = e
-        if isinstance(dl_res, exceptions.Exception):
-            emsg = 'Problem downloading episode ' + self.title + ' of feed ' + self.feed.name + ': ' + str(dl_res)
-            self.feed.logger.error(emsg)
-            return pd_util.RET_GENERAL_ERROR
-        else:
-            self.feed.logger.info('Downloaded ' + self.title + ' OK')
-            self.downloaded = datetime.datetime.utcnow()
-            self.save()
-            return pd_util.RET_SUCCESS
-    
-    
-    """
-        Download this episode.
-        If overwrite is True, download even if episode file already exists. Default is False.
-        If new_only is True, do not download episodes that have already been downloaded,
-        even if the episode file is no longer there. Default is True.
-    """
     def download(self, overwrite, new_only):
         self.feed.logger.info(self.feed.name + ': Processing episode ' + self.title)
         filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
@@ -422,7 +369,8 @@ class Episode(object):
             output.write(dl_data.read())
             output.close()
         except Exception as e:
-            emsg = self.feed.name + ': Problem downloading episode ' + self.title + ': ' + str(e)
+            emsg = '{}: Problem downloading episode {}: {}'.format(self.feed.name, self.title, str(e))
+            #emsg = self.feed.name + ': Problem downloading episode ' + self.title + ': ' + str(e)
             self.feed.logger.error(emsg)
             return pd_util.RET_GENERAL_ERROR
 

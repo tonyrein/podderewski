@@ -223,13 +223,6 @@ def list_feeds(**kwargs):
             print((feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") ))
     return pd_util.RET_SUCCESS
 
-
-
-        
-    
-    
-
-
 def main():
     dispatch_table = {
                   'update': update,
@@ -267,16 +260,15 @@ def main():
     args = parser.parse_args()
 
     cmd = args.command
-    print(("Command: " + cmd))
     if not cmd in dispatch_table:
         print((cmd + " is not a valid command"))
-        sys.exit(1)
+        return pd_util.RET_INVALID_COMMAND
         
     PodService.setup()
-    retval = dispatch_table[cmd](**vars(args))
-    sys.exit(retval)
+    return dispatch_table[cmd](**vars(args))
 
 if __name__ == '__main__':
-    main()
+    retval = main()
+    sys.exit(retval)
     
     
