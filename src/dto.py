@@ -8,9 +8,9 @@ import feedparser
 
 # Imports: stdlib:
 import datetime
-import exceptions
-import urllib2
-from urlparse import urlparse
+# import exceptions - in Python3, this is built-in
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urlparse
 import os.path
 from operator import attrgetter
 
@@ -325,6 +325,11 @@ class Episode(object):
         return ep
         
     def delete(self):
+        # See if file exists. If so, delete it:
+        filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
+        if os.path.isfile(path):
+            os.remove(filespec)
+        # Now delete the database row corresponding to this episode:
         self.dao.delete_instance()
             
     def save(self):
@@ -379,7 +384,7 @@ class Episode(object):
             self.feed.logger.info('File already downloaded')
             return ''
         self.feed.logger.info('Will attempt to download episode to ' + filespec)
-        urlopener = urllib.URLopener()
+        urlopener = urllib.request.URLopener()
         try:
             dl_res = urlopener.retrieve(self.url, filespec)
         except Exception as e:
@@ -412,7 +417,7 @@ class Episode(object):
             return pd_util.RET_FILE_ALREADY_DOWNLOADED
         self.feed.logger.info('Will attempt to download episode as ' + filespec)
         try:
-            dl_data=urllib2.urlopen(self.url)
+            dl_data=urllib.request.urlopen(self.url)
             output = open(filespec,'wb')
             output.write(dl_data.read())
             output.close()
@@ -495,7 +500,7 @@ class Episode(object):
     
     
     def __str__(self):
-        s = self.title + ': ' + self.description
+        s='{}: {}'.format(self.title, self.description)
         s +="\nEpisode date: " + self.episode_date.strftime('%Y-%b-%d') + ', '
         if self.has_been_downloaded():
             s += 'downloaded ' + self.downloaded.strftime('%Y-%b-%d %H:%M') + '\nFilename: ' + self.generate_filename()

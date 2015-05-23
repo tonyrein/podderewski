@@ -109,8 +109,18 @@ def download(**kwargs):
     return pd_util.RET_SUCCESS
 
     
-def _get_feed_detail_string(f):
-    pass
+def _do_feed_detail(f):
+    print((f.name))
+    print(('URL: {}'.format(f.url)))
+    print(('{}'.format(f.description)))
+    print(('Last updated {}'.format(f.last_updated)))
+    print(('Subscribed? {}, Nr of episodes to keep: {}'.format('Y' if f.is_subscribed else 'N', f.number_to_keep)))
+    print('Has the following episodes:')
+    i = 1
+    for e in f.episodes:
+        print(('{}. {}\n'.format(i,e)))
+        i += 1
+    print('\n')
 # 
 # f.name + '\n'
 # URL: f.url + '\n'
@@ -142,7 +152,7 @@ def print_feed_detail(**kwargs):
         if do_all == False:
             feeds = [f for f in feeds if f.is_subscribed ]
         for f in feeds:
-            self._do_feed_detail(f)
+            _do_feed_detail(f)
     return pd_util.RET_SUCCESS
 """
     Add a feed to our list.
@@ -157,7 +167,7 @@ def add(**kwargs):
     if url == '':
         print("You must supply the URL of the feed to be added")
         return pd_util.RET_ARGS_MISSING
-    print("Adding " + url)
+    print(("Adding " + url))
     #PodService.add_feed(url)
     return pd_util.RET_SUCCESS
 
@@ -210,7 +220,7 @@ def list_feeds(**kwargs):
         feed_list = [ f for f in PodService.get_feeds() if f.is_subscribed ]
     if feed_list:
         for feed in feed_list:
-            print(feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") )
+            print((feed.name + ": " + ("Subscribed" if feed.is_subscribed else "Not Subscribed") ))
     return pd_util.RET_SUCCESS
 
 
@@ -257,9 +267,9 @@ def main():
     args = parser.parse_args()
 
     cmd = args.command
-    print("Command: " + cmd)
+    print(("Command: " + cmd))
     if not cmd in dispatch_table:
-        print(cmd + " is not a valid command")
+        print((cmd + " is not a valid command"))
         sys.exit(1)
         
     PodService.setup()

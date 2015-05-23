@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import os
 import os.path
 import sys
@@ -45,7 +45,7 @@ class PodConfig(object):
 
             
         # See if we can read a config file:
-        cfg = ConfigParser.SafeConfigParser()
+        cfg = configparser.SafeConfigParser()
         cls.config_files_read = cfg.read(config_file_search_path)
 
         
@@ -69,9 +69,9 @@ class PodConfig(object):
 if __name__ == '__main__':
     bc = PDConfig
     if bc.config_files_read is not None and len(bc.config_files_read) > 0:
-        print "Read one or more config files: "
-        for f in bc.config_files_read: print f
+        print("Read one or more config files: ")
+        for f in bc.config_files_read: print(f)
     else:
-        print "No config files read; using default values"
+        print("No config files read; using default values")
     
-    print bc
+    print(bc)
