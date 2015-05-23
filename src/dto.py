@@ -327,7 +327,7 @@ class Episode(object):
     def delete(self):
         # See if file exists. If so, delete it:
         filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
-        if os.path.isfile(path):
+        if os.path.isfile(filespec):
             os.remove(filespec)
         # Now delete the database row corresponding to this episode:
         self.dao.delete_instance()
