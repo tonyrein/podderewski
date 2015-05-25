@@ -67,9 +67,6 @@ class PodService(object):
             feed_list = cls.get_feeds()
         else:
             feed_list = cls.feed_list_from_names(feeds_to_update)
-            
-        if feeds_to_update:
-            feed_list = cls.feed_list_from_names(feeds_to_update)
 
         for feed in feed_list:
             if feed.is_subscribed:

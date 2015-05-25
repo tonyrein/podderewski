@@ -113,7 +113,7 @@ class Podderewski(object):
     def update(self,**kwargs):
         self._logger.debug("Update called")
         feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
-        if feed_list is None or len(feed_list == 0):
+        if feed_list is None or len(feed_list) == 0:
             self._logger.debug("No feeds specified")
         else:
             self._logger.debug(feed_list)
