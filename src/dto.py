@@ -53,22 +53,22 @@ class Feed(object):
         retains only specified number of episodes.
     """
     def update(self):
+        self.logger.debug("Updating feed {}".format(self.name))
         self.load_episodes_from_db()
         fp = feedparser.parse(self.url)
-        self.logger.info('Updating episodes for ' + self.name)
         if fp and fp.entries:
             for e in fp.entries:
                 ep = Episode.create_from_parsed_entry(e)
-                self.logger.info('Processing episode ' + ep.title)
+                self.logger.debug('Processing episode ' + ep.title)
                 if not any(le.episode_id == ep.episode_id for le in self.episodes):
                     # this is a new episode.
-                    self.logger.info('New episode')
+                    self.logger.info('{} is a new episode'.format(ep.title))
                     ep.feed = self
                     ep.dao.feed = self.dao
                     ep.save()
                     self.episodes.append(ep)
                 else:
-                    self.logger.info('Episode already exists')
+                    self.logger.info('{} already exists'.format(ep.title))
         # now sort the episodes list by date, with newest first:
         self.episodes.sort(key=attrgetter('episode_date'), reverse = True)
         self.logger.info('Feed has ' + str(len(self.episodes)) + ' episodes; will keep ' + str(self.number_to_keep))
@@ -108,6 +108,7 @@ class Feed(object):
         even if the episode file is no longer there. Default is True.
     """
     def download(self, overwrite, new_only):
+        self.logger.debug("Downloading for feed {}".format(self.name))
         for ep in self.episodes:
             ep.download(overwrite,new_only)
     
