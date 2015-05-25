@@ -354,13 +354,13 @@ class Episode(object):
         even if the episode file is no longer there. Default is True.
     """
     def download(self, overwrite, new_only):
-        self.feed.logger.info(self.feed.name + ': Processing episode ' + self.title)
+        self.feed.logger.debug(self.feed.name + ': Processing episode ' + self.title)
         filespec = self.feed.make_download_dir() + os.sep + self.generate_filename()
         if overwrite == False and os.path.isfile(filespec):
-            self.feed.logger.info('File already exists -- not downloading')
+            self.feed.logger.debug('File already exists -- not downloading')
             return pd_util.RET_FILE_ALREADY_EXISTS
         if new_only and self.has_been_downloaded():
-            self.feed.logger.info('Episode already downloaded')
+            self.feed.logger.debug('Episode already downloaded')
             return pd_util.RET_FILE_ALREADY_DOWNLOADED
         self.feed.logger.info('Will attempt to download episode as ' + filespec)
         try:
