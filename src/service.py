@@ -156,7 +156,7 @@ class PodService(object):
             feed.save()
             
     @classmethod
-    def change_feed_description(cls, new_description, feed_list = None):
+    def change_feed_descriptions(cls, new_description, feed_list = None):
         feeds_to_change = []
         if feed_list is None or len(feed_list) == 0:
             feeds_to_change = cls.get_feeds()

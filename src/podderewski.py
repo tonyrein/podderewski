@@ -222,7 +222,7 @@ class Podderewski(object):
         new_name = kwargs['newname'] if 'newname' in kwargs else ''
         new_name = new_name.strip()
         if new_name is None or new_name == '':
-            self._logger.debug("rename() called with invalid araguments. This command requires a new name to be supplied.")
+            self._logger.debug("rename() called with invalid arguments. This command requires a new name to be supplied.")
             print("The rename command requires a new name")
             return pd_util.RET_ARGS_MISSING
         PodService.rename_feed(feed_name, new_name)
@@ -230,8 +230,14 @@ class Podderewski(object):
     
     def change_feed_descriptions(self,**kwargs):
         self._logger.debug("change_feed_descriptions called")
-        feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
-        PodService.change_feed_descriptions(feed_list)
+        flist = kwargs['feeds'] if 'feeds' in kwargs else []
+        desc = kwargs['description'] if 'description' in kwargs else None
+        if desc is None or desc == '':
+            self._logger.debug("change_feed_descriptions() called with invalid arguments. This command requires a non-null description to be supplied.")
+            print("You must supply a feed description.")
+            return pd_util.RET_ARGS_MISSING
+        desc = desc.strip()
+        PodService.change_feed_descriptions(feed_list=flist, new_description=desc )
         return pd_util.RET_SUCCESS
     
     
