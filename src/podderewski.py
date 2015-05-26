@@ -81,7 +81,6 @@ import pd_util
 
 
 class Podderewski(object):
-
     def __init__(self):
         self._logger = pd_util.configure_logging()
         self._dispatch_table = {
@@ -105,6 +104,7 @@ class Podderewski(object):
                       'describe': self.change_feed_descriptions,
                       }
         self._allowable_commands = [ k for k in self._dispatch_table ]
+        self._allowable_commands.sort()
         
     """
         Update episode lists for your subscribed feeds.
@@ -142,7 +142,7 @@ class Podderewski(object):
         print(('{}'.format(f.description)))
         print(('Last updated {}'.format(f.last_updated)))
         print(('Subscribed? {}, Nr of episodes to keep: {}'.format('Y' if f.is_subscribed else 'N', f.number_to_keep)))
-        print('Has the following episodes:')
+        print('\nHas the following episodes:\n')
         i = 1
         for e in f.episodes:
             print(('{}. {}\n'.format(i,e)))
@@ -182,7 +182,7 @@ class Podderewski(object):
         url = kwargs['url'] if 'url' in kwargs else ''
         url = url.strip()
         if url == '':
-            self._logger.debug("add() called with no URL supplied")
+            self._logger.error("add() called with no URL supplied")
             print("You must supply the URL of the feed to be added")
             return pd_util.RET_ARGS_MISSING
         print(("Adding " + url))
@@ -215,14 +215,22 @@ class Podderewski(object):
     def rename_feed(self,**kwargs):
         feed_list = kwargs['feeds'] if 'feeds' in kwargs else []
         if feed_list is None or len(feed_list) != 1:
-            self._logger.debug("rename() called with invalid araguments. This command requires exactly one feed name to be supplied.")
-            print("The rename command requires exactly one feed name -- none supplied")
+            print(feed_list)
+            print("Length: {}".format(len(feed_list)))
+            self._logger.error("rename() called with invalid araguments. This command requires exactly one feed name to be supplied.")
+            print("The rename command requires exactly one feed name")
             return pd_util.RET_ARGS_MISSING
         feed_name = feed_list[0]
-        new_name = kwargs['newname'] if 'newname' in kwargs else ''
+        if 'newname' in kwargs:
+            new_name = kwargs['newname']
+            if new_name is None:
+                new_name = ''
+        else:
+            new_name = ''
+
         new_name = new_name.strip()
-        if new_name is None or new_name == '':
-            self._logger.debug("rename() called with invalid arguments. This command requires a new name to be supplied.")
+        if new_name == '':
+            self._logger.error("rename() called with invalid arguments. This command requires a new name to be supplied.")
             print("The rename command requires a new name")
             return pd_util.RET_ARGS_MISSING
         PodService.rename_feed(feed_name, new_name)
@@ -233,7 +241,7 @@ class Podderewski(object):
         flist = kwargs['feeds'] if 'feeds' in kwargs else []
         desc = kwargs['description'] if 'description' in kwargs else None
         if desc is None or desc == '':
-            self._logger.debug("change_feed_descriptions() called with invalid arguments. This command requires a non-null description to be supplied.")
+            self._logger.error("change_feed_descriptions() called with invalid arguments. This command requires a non-null description to be supplied.")
             print("You must supply a feed description.")
             return pd_util.RET_ARGS_MISSING
         desc = desc.strip()
@@ -254,14 +262,21 @@ class Podderewski(object):
         return pd_util.RET_SUCCESS
     
     def main(self):
-        
-        
-        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
-        parser.add_argument('command', choices = self._allowable_commands,
-        help="Allowable commands (you must supply exactly one):\n\n*'update' or 'up' to update feeds\n*'subscribe' or 'unsubscribe' to subscribe\n\tor unsubscribe from feeds\n*'download' or 'dl' to download episodes\n*'add' to add a feed\n*'info' to show details for one or more feeds.\n*'list' to list feeds.")
+        help_string="\nAllowable commands (you must supply exactly one):\n\n"
+        help_string+="*'update' or 'up' to update feeds\n"
+        help_string+="*'subscribe' or 'su' to subscribe to one or more feeds\n"
+        help_string+="*'unsubscribe' or 'un' to unsubscribe from one or more feeds\n"
+        help_string+="*'download' or 'dl' to download episodes\n"
+        help_string+="*'add' or 'ad' to add a feed\n"
+        help_string+="*'info' or 'in' to show details for one or more feeds.\n"
+        help_string+="*'list' or 'li' to list feeds\n"
+        help_string+="*'describe' or 'de' to change the description of one or more feeds."
     
+        parser = argparse.ArgumentParser(usage='%(prog)s command [options]', formatter_class=RawTextHelpFormatter)
+        parser.add_argument('command', choices = self._allowable_commands, help=help_string)
+    
+        #parser.add_argument("--feeds", "-f", help="One or more feed names, with each one in quotes", required = False)
         parser.add_argument("--feeds", "-f", nargs="*", help="One or more feed names, with each one in quotes", required = False)
-        
         parser.add_argument("--url", "-u", help = "URL of feed to add.", required = False)
         
         parser.add_argument("--newname", "-n", help="New name for rename command to apply", required = False)
@@ -275,8 +290,8 @@ class Podderewski(object):
         cmd = args.command
         _logger = pd_util.configure_logging()
         if not cmd in self._allowable_commands:
-            
-            print((cmd + " is not a valid command"))
+            self._logger.error("Podderewski invoked with invalid command: {}".format(cmd))
+            print(cmd + " is not a valid command")
             return pd_util.RET_INVALID_COMMAND
             
         PodService.setup()
