@@ -16,6 +16,10 @@ from operator import attrgetter
 
 
 
+START_OF_EPOCH=datetime.datetime(1970,1,1,0,0)
+
+BLANK_TIME=START_OF_EPOCH
+
 # Utility functions:
 def create_date_from_structs(published, updated):
     # published and updated are tm_struct structures
@@ -25,7 +29,7 @@ def create_date_from_structs(published, updated):
     if published is not None:
         return datetime.datetime(published.tm_year, published.tm_mon, published.tm_mday, 0, 0)
     # if we couldn't find a date, return start of epoch:
-    return datetime.datetime(1970,1,1,0,0)
+    return BLANK_TIME
 
 # entry is a feedparser entry object -- one of
 # the objects you get by iterating over a parsed feed's entries collection.
@@ -159,7 +163,7 @@ class Feed(object):
             f = Feed.create_from_dao(fd)
             retlist.append(f)
         return retlist    
-    
+    p = urlparse(self.dao.url).path
     """
         Given an url and, optionally, a name, build a Feed
         object.
@@ -240,7 +244,7 @@ class Feed(object):
         if newvalue is None:
             raise Exception('Feed url cannot be null.')
         self.dao.url = newvalue
-    @property
+    @propertyp
     def description(self):
         return self.dao.description
     @description.setter
@@ -296,7 +300,7 @@ class Episode(object):
         self._feed = None
     
     def has_been_downloaded(self):
-        return self.downloaded != datetime.datetime(1970,1,1,0,0)
+        return self.downloaded != BLANK_TIME
       
     @classmethod
     def create_from_parsed_entry(cls,entry):
@@ -307,7 +311,7 @@ class Episode(object):
         ep.episode_id = entry.get('id','')
         ep.episode_date = create_date_from_structs(
             entry.get('published_parsed',None), entry.get('updated_parsed',None))
-        ep.downloaded = datetime.datetime(1970,1,1,0,0)
+        ep.downloaded = BLANK_TIME
         (ep.url, ep.mime_type) = get_entry_url_and_type(entry)
         return ep
         
@@ -317,7 +321,7 @@ class Episode(object):
         self.episode_id = entry.get('id','')
         self.episode_date = create_date_from_structs(
             entry.get('published_parsed',None), entry.get('updated_parsed',None))
-        self.downloaded = datetime.datetime(1970,1,1,0,0)
+        self.downloaded = BLANK_TIME
         (self.url, self.mime_type) = get_entry_url_and_type(entry)
     @classmethod
     def create_from_dao(cls,dao):
