@@ -53,7 +53,7 @@ class PodService(object):
         one by that name.
     """
     @classmethod
-    def add_feed(cls, feed_url, alt_name, episodes_to_keep):
+    def add_feed(cls, feed_url, alt_name=None, episodes_to_keep=None):
         f = Feed.init_from_url(feed_url, alt_name)
         if episodes_to_keep:
             f.number_to_keep = episodes_to_keep

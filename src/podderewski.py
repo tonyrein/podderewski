@@ -185,8 +185,8 @@ class Podderewski(object):
             self._logger.error("add() called with no URL supplied")
             print("You must supply the URL of the feed to be added")
             return pd_util.RET_ARGS_MISSING
-        print(("Adding " + url))
-        #PodService.add_feed(url)
+        print("Adding " + url)
+        PodService.add_feed(url)
         return pd_util.RET_SUCCESS
     
     """
